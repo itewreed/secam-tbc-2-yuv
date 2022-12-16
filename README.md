@@ -34,4 +34,9 @@ No dropout compensation is present, as this is something usually done by the ld-
 Flaws present can be, to a certain degree, alleviated in post.
 
 ## Troubleshooting
-If the majority of the video is affected by the overpainting try to decode with --start <framenumber> option in vhs-decode. This will start the decode from another frame and reverts this effect. You might have to try out several start frames for success.
+If the majority of the video is affected by pink overpainting there are two possible solutions to fix that.
+### 1. Give the input files an offset
+To shift the offset by one frame we have to take account, that one frame is 1135 samples per line over 626 lines. So the formula is (1135*626)*n. \
+The n is a variable that can be anything between zero and the last frame of the video. It can be seen as a start-frame option. So use this to find a start frame where both fields are not pink.
+### 2. Decode by using --start parameter
+Try to decode with --start <framenumber> option in vhs-decode. This will start the decode from another frame and reverts this effect. You might have to try out several start frames for success. But this is less convenient than option 1.
