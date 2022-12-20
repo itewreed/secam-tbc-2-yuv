@@ -19,12 +19,28 @@ Example ffmpeg command:
 ffmpeg -f rawvideo -pix_fmt yuv444p -video_size 1135x624 -r 25 -i YUV.bin -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 output.mkv
 ```
 
-If you use the second script, which should be the prefered one, the ffmpeg command is.
+If you use the second script, which should be the preferred one, the ffmpeg command is.
 ```
-ffmpeg -f rawvideo -pix_fmt yuv444p -video_size 1185x624 -r 25 -i YUV.bin -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 output.mkv
+ffmpeg -f rawvideo -pixel_format yuv444p -color_range tv -color_primaries "bt470bg" -color_trc "gamma28" -colorspace "bt470bg" -video_size 1185x624 -r 25 -i YUV.bin -filter:v "crop=928:576:183:46" -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 output.mkv
 ```
-The video dimensions of the file are 1135x624, or 1185x624 depending on the graph used, with 25fps. Rendering out as ffv1 is recommended. As the width of the video is not divideable by 2, cropping has to be done in a video editor like virtualdub2 or using avisynth. Not doing so will make it not work in non linear editing programs. Also encoding to h.264 and other video formats will not work without cropping.
+It also crops the video to the same dimensions and cutout as it would be from the gen_chroma_vid script. This way it is possible to merge the chroma and luma planes from the normal ld-chroma-decoder and the gnuradio graph output in order to benefit from dropout correction.
+
+The video dimensions of the file are 1135x624, or 928x576 depending on the graph used, with 25fps. Rendering out as ffv1 is recommended. If the width of the video is not divideable by 2, cropping has to be done in a video editor like virtualdub2 or using avisynth. Not doing so will make it not work in non linear editing programs. Also encoding to h.264 and other video formats will not work without cropping.
 The output should be a proper interlaced video, thus can be properly deinterlaced if needed.
+
+## Merge color with dropout corrected MKV file
+1. create the video file as usual with the gen_chroma_vid script from vhs / ld-decode project
+2. Open it in an editor like virtualdub2, set compression to FFMPEG FFV1 lossless codec. In the config of the codec select 8 bit and YUV 4:4:4
+3. Render out as new MKV file
+4. Create the YUV file with the GNURadio graph
+5. Render this as MKV file as explained in this docu
+6. Merge the files and planes using the following command
+
+```
+ffmpeg -y -i "videofromgnuradio" -i "videofromgenvidscript  " -filter_complex " [0:v]format=yuv444p[0v]; [1:v]format=yuv444p[1v]; [0v][1v]mergeplanes=0x100102:yuv444p[v]" -map '[v]' -an -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
+```
+The order is important, as the mapping is as follows in the output.
+Y of 2nd input -> Y, U of 1st input -> U, V of 1st input -> V
 
 ## Limitations
 This is an experimental solution to decode SECAM video from the vhs / ld-decode project. There is a flaw on the right edge of the video. So part of the video will be overpainted in pink color. Depending on the input file also the whole video window can get overpainted by this. The cause and a solution is yet unkown.
