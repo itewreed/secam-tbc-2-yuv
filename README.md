@@ -11,7 +11,7 @@ Run the graph. There is a color video preview in the graph. It will slow down th
 
 In the next step use ffmpeg to convert that raw YUV file.
 ```
-ffmpeg -f rawvideo -pixel_format yuv444p -color_range tv -color_primaries "bt470bg" -color_trc "gamma28" -colorspace "bt470bg" -video_size 1185x624 -r 25 -i YUV.bin -filter:v "crop=928:576:183:46" -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 output.mkv
+ffmpeg -f rawvideo -pixel_format yuv444p -color_range tv -color_primaries "bt470bg" -color_trc "gamma28" -colorspace "bt470bg" -video_size 1185x624 -r 25 -i YUV.bin -filter:v "crop=928:576:183:46, setdar=1856/1383" -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 output.mkv
 ```
 It also crops the video to the same dimensions and cutout as it would be from the gen_chroma_vid script. This way it is possible to merge the chroma and luma planes from the normal ld-chroma-decoder and the gnuradio graph output in order to benefit from dropout correction.
 
@@ -25,14 +25,14 @@ The output should be a proper interlaced video, thus can be properly deinterlace
 7. Merge the files and planes using the following command
 
 ```
-ffmpeg -y -i "videofromgnuradio" -ss 0.00 -i "videofromgenvidscript  " -filter_complex " [0:v]format=yuv444p[0v]; [1:v]format=yuv422p10le[1v]; [0v][1v]mergeplanes=0x100102:yuv422p10le[v]" -map '[v]' -an -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
+ffmpeg -y -i "videofromgnuradio" -ss 0.00 -i "videofromgenvidscript  " -filter_complex " [0:v]format=yuv444p[0v]; [1:v]format=yuv422p10le[1v]; [0v][1v]mergeplanes=0x100102:yuv422p10le[v]" -map 1:a -c:a copy -map '[v]' -an -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
 ```
 The order is important, as the mapping is as follows in the output.
 Y of 2nd input -> Y, U of 1st input -> U, V of 1st input -> V
 
 You can also omit one step and directly merge the YUV file from Gnuradio with the gen_chroma_vid generated file.
 ```
-ffmpeg -y -f rawvideo -pixel_format yuv444p -color_range tv -color_primaries "bt470bg" -color_trc "gamma28" -colorspace "bt470bg" -video_size 1185x624 -r 25 -i "YUV.bin" -ss 0.00 -i "videofromgenvidscript" -filter_complex " [0:v]format=yuv444p, crop=928:576:183:46, setdar=1856/1383[0v]; [1:v]format=yuv422p10le, setdar=1856/1383[1v]; [0v][1v]mergeplanes=0x100102:yuv422p10le[v]" -map '[v]' -an -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
+ffmpeg -y -f rawvideo -pixel_format yuv444p -color_range tv -color_primaries "bt470bg" -color_trc "gamma28" -colorspace "bt470bg" -video_size 1185x624 -r 25 -i "videofromgnuradio" -ss 0.00 -i "videofromgenvidscript" -filter_complex "[0:v]format=yuv444p, crop=928:576:183:46, setdar=1856/1383[chroma]; [1:v]format=yuv422p10le, setdar=1856/1383[luma]; [chroma][luma]mergeplanes=0x100102:yuv422p10le[v]" -map 1:a -c:a copy -map '[v]' -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
 ```
 **In both cases the -ss option is important to align both files. Set it from 0.00 to 0.04 if your startfield is 2!**\
 0.04 means 1/25th of a second, representing skipping one frame at the beginning from the gen_chroma_vid generated file.
