@@ -22,16 +22,20 @@ The output should be a proper interlaced video, thus can be properly deinterlace
 1. Create the YUV file with the GNURadio graph
 2. Render this as MKV file as explained in this docu
 3. create the video file as usual with the gen_chroma_vid script from vhs / ld-decode project
-4. Open the gen_chroma_vid rendered video in an editor like virtualdub2, set compression to FFMPEG FFV1 lossless codec. In the config of the codec select 10 bit and YUV 4:2:2
-5. Depending on the field toggle used in the graph, see troubleshooting section, you have to omit the first frame (toggle field = 2) or leave as is (toggle field = 0)
-6. Render out as new MKV file
 7. Merge the files and planes using the following command
 
 ```
-ffmpeg -y -i "videofromgnuradio" -i "videofromgenvidscript  " -filter_complex " [0:v]format=yuv444p[0v]; [1:v]format=yuv422p10le[1v]; [0v][1v]mergeplanes=0x100102:yuv422p10le[v]" -map '[v]' -an -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
+ffmpeg -y -i "videofromgnuradio" -ss 0.00 -i "videofromgenvidscript  " -filter_complex " [0:v]format=yuv444p[0v]; [1:v]format=yuv422p10le[1v]; [0v][1v]mergeplanes=0x100102:yuv422p10le[v]" -map '[v]' -an -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
 ```
 The order is important, as the mapping is as follows in the output.
 Y of 2nd input -> Y, U of 1st input -> U, V of 1st input -> V
+
+You can also omit one step and directly merge the YUV file from Gnuradio with the gen_chroma_vid generated file.
+```
+ffmpeg -y -f rawvideo -pixel_format yuv444p -color_range tv -color_primaries "bt470bg" -color_trc "gamma28" -colorspace "bt470bg" -video_size 1185x624 -r 25 -i "YUV.bin" -ss 0.00 -i "videofromgenvidscript" -filter_complex " [0:v]format=yuv444p, crop=928:576:183:46, setdar=1856/1383[0v]; [1:v]format=yuv422p10le, setdar=1856/1383[1v]; [0v][1v]mergeplanes=0x100102:yuv422p10le[v]" -map '[v]' -an -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
+```
+**In both cases the -ss option is important to align both files. Set it from 0.00 to 0.04 if your startfield is 2!**\
+0.04 means 1/25th of a second, representing skipping one frame at the beginning from the gen_chroma_vid generated file.
 
 ## Limitations
 This is an experimental solution to decode SECAM video from the vhs / ld-decode project. A flaw where the right border is pink has been fixed with a workaround. Depending on the input file also the whole video window can get overpainted by this. The cause and a solution is yet unkown.
