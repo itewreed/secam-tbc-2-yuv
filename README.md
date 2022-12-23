@@ -1,6 +1,11 @@
 # secam-tbc-2-yuv
-GNU radio based graph to convert secam based TBC files of the vhs-decode project to a YUV file, which then can be further processed with ffmpeg.
+GNU radio based graph to convert SECAM based TBC files of the vhs-decode project to a YUV file. Combination with original mkv file possible to benefit from dropout correction.
 The graph is based on Gnuradio 3.10
+
+## Quick usage guide
+* Load both tbc files into the graph, set output file
+* Run graph, adjust fieldstart parameter (value 0 or 2) if necessary
+* Use bash script to combine with dropout corrected mkv file create by gen_chroma_vid script
 
 ## Graphs
 Color values are set to properly decode color of TBC files who were decoded by using the MESECAM option in vhs-decode. Also MESECAM option should be the preferred one for decoding, as there are less color streaks in the decoded video.
