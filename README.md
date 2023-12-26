@@ -10,6 +10,14 @@ The graph is based on Gnuradio 3.10
 ## Graphs
 Color values are set to properly decode color of TBC files who were decoded by using the MESECAM option in vhs-decode. Also MESECAM option should be the preferred one for decoding, as there are less color streaks in the decoded video.
 
+## CLI Usage
+The Python has to be used that GNURadio also uses to execute the file. Should usually be in /usr/bin/python3. GNURadio has to be installed to make the Python script works.
+```
+/usr/bin/python3 -u  secam2yuv.py  --inputdir <directory where the tbc files are> --videofile <filename without .tbc> --outputdir <directory to save the bin file to> --startfield <0 or 2>
+# example
+/usr/bin/python3 -u  secam2yuv.py  --inputdir /home/vhsuser/tbc/ --videofile tape477_01_visio_1991-06-09_16mhz --outputdir /home/vhsuser/Videos/ --startfield 0
+```
+
 ## Usage
 Load the graph in GnuRadio Companion. As file sources select the \*.tbc and \*\_chroma.tbc files. At the very right of the graph define the output-file. It defaults to YUV.bin.
 Run the graph. There is a color video preview in the graph. It will slow down the conversion, but it's highly recommend to use it, as you can live check if the video flaps to pink at some point.
@@ -24,6 +32,11 @@ The video dimensions of the file is 928x576, with 25fps. Rendering out as ffv1 i
 The output should be a proper interlaced video, thus can be properly deinterlaced if needed.
 
 ## Merge color with dropout corrected MKV file
+### AviSynth way
+Use the AviSynth script. The additional module RawSourcePlus needs to be installed beforehand. Using AVSPmod a live preview is available. Put in the location of the videofiles, ld muxed MKV file into FFmpegSource2 and GNURadio created bin file into RawSourcePlus.
+The trimming needs to be commented in if startfield is 2, otherwise it needs to be commented out. Save and open the script in your desired video application that understands AviSynth scripts.
+
+### CLI Way
 1. Create the YUV file with the GNURadio graph
 2. Render this as MKV file as explained in this docu
 3. create the video file as usual with the gen_chroma_vid script from vhs / ld-decode project
