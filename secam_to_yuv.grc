@@ -51,7 +51,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1392, 8.0]
+    coordinate: [1728, 1160.0]
     rotation: 0
     state: true
 - name: chroma_range_red
@@ -72,13 +72,15 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [1240, 8.0]
+    coordinate: [1576, 1160.0]
     rotation: 0
     state: true
 - name: colordelay
   id: variable
   parameters:
-    comment: 1120 with band pass enabled
+    comment: '885 with band pass enabled
+
+      1100 without band pass enabled'
     value: 1070+sample_shift
   states:
     bus_sink: false
@@ -179,11 +181,11 @@ blocks:
     coordinate: [864, 16.0]
     rotation: 0
     state: true
-- name: startfield
+- name: startfield_old
   id: variable
   parameters:
     comment: ''
-    value: '0'
+    value: '2'
   states:
     bus_sink: false
     bus_source: false
@@ -996,7 +998,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [624, 832.0]
+    coordinate: [1168, 1080.0]
     rotation: 0
     state: enabled
 - name: blocks_divide_xx_0
@@ -1042,7 +1044,7 @@ blocks:
     alias: ''
     append: 'False'
     comment: ''
-    file: yuv-outfile_sf0.bin
+    file: outputdir + "/" + videofile + "_sf" + str(startfield) + ".bin"
     type: byte
     unbuffered: 'False'
     vlen: '1'
@@ -1050,7 +1052,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [3136, 520.0]
+    coordinate: [3136, 528.0]
     rotation: 0
     state: enabled
 - name: blocks_file_source_0_0
@@ -1060,7 +1062,7 @@ blocks:
     alias: ''
     begin_tag: pmt.PMT_NIL
     comment: ''
-    file: tbcfile.tbc
+    file: inputdir + "/" + videofile + ".tbc"
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -1072,7 +1074,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 120.0]
+    coordinate: [16, 120.0]
     rotation: 0
     state: enabled
 - name: blocks_file_source_0_0_0
@@ -1084,7 +1086,7 @@ blocks:
     comment: 'Offset can be set to fix pink
 
       1135*626 is an offset of one frame'
-    file: tbcfile_chroma.tbc
+    file: inputdir + "/" + videofile + "_chroma.tbc"
     length: '0'
     maxoutbuf: '0'
     minoutbuf: '0'
@@ -1096,7 +1098,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [8, 240.0]
+    coordinate: [16, 240.0]
     rotation: 0
     state: enabled
 - name: blocks_float_to_uchar_0_0
@@ -1141,7 +1143,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [2912, 648.0]
+    coordinate: [2896, 680.0]
     rotation: 0
     state: enabled
 - name: blocks_float_to_uchar_0_0_0_0_1_0
@@ -1261,7 +1263,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [752, 840.0]
+    coordinate: [760, 856.0]
     rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_2
@@ -1420,7 +1422,7 @@ blocks:
     bus_structure: null
     coordinate: [2920, 904.0]
     rotation: 0
-    state: true
+    state: disabled
 - name: blocks_null_sink_4
   id: blocks_null_sink
   parameters:
@@ -2256,7 +2258,7 @@ blocks:
     bus_structure: null
     coordinate: [2736, 744.0]
     rotation: 0
-    state: true
+    state: enabled
 - name: blocks_vector_to_stream_0_2
   id: blocks_vector_to_stream
   parameters:
@@ -2507,6 +2509,40 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [1920, 312.0]
+    rotation: 0
+    state: true
+- name: inputdir
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: ''
+    short_id: ''
+    type: str
+    value: /home/user/input/
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1344, 16.0]
+    rotation: 0
+    state: true
+- name: outputdir
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: ''
+    short_id: ''
+    type: str
+    value: /home/user/output/
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1488, 16.0]
     rotation: 0
     state: true
 - name: qtgui_number_sink_0
@@ -2926,6 +2962,23 @@ blocks:
     coordinate: [592, 1832.0]
     rotation: 0
     state: disabled
+- name: startfield
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: ''
+    short_id: ''
+    type: intx
+    value: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1640, 16.0]
+    rotation: 0
+    state: true
 - name: video_sdl_sink_0_0_0_0
   id: video_sdl_sink
   parameters:
@@ -2970,6 +3023,23 @@ blocks:
     coordinate: [3240, 816.0]
     rotation: 180
     state: disabled
+- name: videofile
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: ''
+    short_id: ''
+    type: str
+    value: tbcfilename
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1232, 16.0]
+    rotation: 0
+    state: true
 - name: virtual_sink_0
   id: virtual_sink
   parameters:
@@ -3058,7 +3128,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [752, 768.0]
+    coordinate: [760, 984.0]
     rotation: 180
     state: enabled
 - name: virtual_sink_3
@@ -3354,4 +3424,4 @@ connections:
 
 metadata:
   file_format: 1
-  grc_version: 3.10.3.0
+  grc_version: 3.10.5.1
