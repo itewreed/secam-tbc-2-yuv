@@ -4,7 +4,7 @@ The graph is based on Gnuradio 3.10
 
 ## Quick usage guide
 * Load both tbc files into the graph, set output file
-* Run graph, adjust fieldstart parameter (value 0 or 2) if necessary
+* Run graph, adjust invert_crcb parameter (value 0 or 1) if necessary
 * Use bash script to combine with dropout corrected mkv file create by gen_chroma_vid script
 
 ## Graphs
@@ -13,14 +13,14 @@ Color values are set to properly decode color of TBC files who were decoded by u
 ## CLI Usage
 The Python has to be used that GNURadio also uses to execute the file. Should usually be in /usr/bin/python3. GNURadio has to be installed to make the Python script works.
 ```
-/usr/bin/python3 -u  secam2yuv.py  --inputdir <directory where the tbc files are> --videofile <filename without .tbc> --outputdir <directory to save the bin file to> --startfield <0 or 2>
+/usr/bin/python3 -u  secam2yuv.py  --inputdir <directory where the tbc files are> --videofile <filename without .tbc> --outputdir <directory to save the bin file to> --invert_crcb <0 or 1>
 # example
-/usr/bin/python3 -u  secam2yuv.py  --inputdir /home/vhsuser/tbc/ --videofile tape477_01_visio_1991-06-09_16mhz --outputdir /home/vhsuser/Videos/ --startfield 0
+/usr/bin/python3 -u  secam2yuv.py  --inputdir /home/vhsuser/tbc/ --videofile tape477_01_visio_1991-06-09_16mhz --outputdir /home/vhsuser/Videos/ --invert_crcb 1
 ```
 
 ## Usage
-Load the graph in GnuRadio Companion. As file sources select the \*.tbc and \*\_chroma.tbc files. At the very right of the graph define the output-file. It defaults to YUV.bin.
-Run the graph. There is a color video preview in the graph. It will slow down the conversion, but it's highly recommend to use it, as you can live check if the video flaps to pink at some point.
+Load the graph in GnuRadio Companion. Set the inputdir, outputdir and videofile parameters. The output file name is the name of the input + info if invert was set aka videofile_i0.bin.
+Run the graph. There is a color video preview in the graph. It will slow down the conversion, but it's highly recommend to use it, as you can live check if the video flaps to pink at some point. If it flaps, quickly press the invert_crcb_switch button, then colors should be back to normal
 
 In the next step use ffmpeg to convert that raw YUV file.
 ```
@@ -34,7 +34,7 @@ The output should be a proper interlaced video, thus can be properly deinterlace
 ## Merge color with dropout corrected MKV file
 ### AviSynth way
 Use the AviSynth script. The additional module RawSourcePlus needs to be installed beforehand. Using AVSPmod a live preview is available. Put in the location of the videofiles, ld muxed MKV file into FFmpegSource2 and GNURadio created bin file into RawSourcePlus.
-The trimming needs to be commented in if startfield is 2, otherwise it needs to be commented out. Save and open the script in your desired video application that understands AviSynth scripts.
+The trimming needs to be commented in if startfield is still used and startfield is 2, otherwise it needs to be commented out. Save and open the script in your desired video application that understands AviSynth scripts.
 
 ### CLI Way
 1. Create the YUV file with the GNURadio graph
@@ -52,7 +52,7 @@ You can also omit one step and directly merge the YUV file from Gnuradio with th
 ```
 ffmpeg -y -f rawvideo -pixel_format yuv444p -color_range tv -color_primaries "bt470bg" -color_trc "gamma28" -colorspace "bt470bg" -video_size 1185x624 -r 25 -i "videofromgnuradio" -ss 0.00 -i "videofromgenvidscript" -filter_complex "[0:v]format=yuv444p, crop=928:576:183:46, setdar=1856/1383[chroma]; [1:v]format=yuv422p10le, setdar=1856/1383[luma]; [chroma][luma]mergeplanes=0x100102:yuv422p10le[v]" -map 1:a -c:a copy -map '[v]' -c:v ffv1 -coder 1 -context 1 -g 25 -level 3 -slices 16 -slicecrc 1 -top 1 "video_merged.mkv"
 ```
-**In both cases the -ss option is important to align both files. Set it from 0.00 to 0.04 if your startfield is 2!**\
+**In both cases the -ss option is important to align both files. Set it from 0.00 to 0.04 if you still use startfield and your startfield is 2!**\
 0.04 means 1/25th of a second, representing skipping one frame at the beginning from the gen_chroma_vid generated file.
 
 ## Limitations
