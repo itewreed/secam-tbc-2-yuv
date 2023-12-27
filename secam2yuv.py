@@ -48,7 +48,7 @@ from gnuradio import qtgui
 
 class secam2yuv(gr.top_block, Qt.QWidget):
 
-    def __init__(self, inputdir='/home/user/input/', outputdir='/home/user/output/', startfield=0, videofile='tbcfilename'):
+    def __init__(self, inputdir='input directory (with tbcs)', invert_crcb=0, outputdir='output directory', videofile='videofile without .tbc'):
         gr.top_block.__init__(self, "secam TBC files to YUV file", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("secam TBC files to YUV file")
@@ -83,8 +83,8 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         # Parameters
         ##################################################
         self.inputdir = inputdir
+        self.invert_crcb = invert_crcb
         self.outputdir = outputdir
-        self.startfield = startfield
         self.videofile = videofile
 
         ##################################################
@@ -93,10 +93,12 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.sample_shift = sample_shift = 50
         self.line_length2 = line_length2 = 1135
         self.startfield_old = startfield_old = 2
+        self.startfield = startfield = 0
         self.samp_rate = samp_rate = 1135/(64e-6)
         self.lines_per_frame_discard = lines_per_frame_discard = 1
         self.lines_per_frame = lines_per_frame = 625
         self.line_length = line_length = line_length2+sample_shift
+        self.invert_crcb_switch = invert_crcb_switch = 0
         self.fm_demph = fm_demph = 150e-8
         self.colordelay = colordelay = 1070+sample_shift
         self.chroma_range_red = chroma_range_red = 12.90
@@ -106,6 +108,13 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
+        self._invert_crcb_switch_choices = {'Pressed': 1, 'Released': 0}
+
+        _invert_crcb_switch_toggle_button = qtgui.ToggleButton(self.set_invert_crcb_switch, 'invert_crcb_switch', self._invert_crcb_switch_choices, False, 'value')
+        _invert_crcb_switch_toggle_button.setColors("default", "default", "default", "default")
+        self.invert_crcb_switch = _invert_crcb_switch_toggle_button
+
+        self.top_layout.addWidget(_invert_crcb_switch_toggle_button)
         self._chroma_range_red_range = Range(10, 14, 0.05, 12.90, 200)
         self._chroma_range_red_win = RangeWidget(self._chroma_range_red_range, self.set_chroma_range_red, "Color Red", "counter_slider", float, QtCore.Qt.Horizontal)
         self.top_layout.addWidget(self._chroma_range_red_win)
@@ -120,7 +129,7 @@ class secam2yuv(gr.top_block, Qt.QWidget):
             3, #number of inputs
             None # parent
         )
-        self.qtgui_time_sink_x_0_0.set_update_time(0.10)
+        self.qtgui_time_sink_x_0_0.set_update_time(0.1)
         self.qtgui_time_sink_x_0_0.set_y_axis(-3, 255)
 
         self.qtgui_time_sink_x_0_0.set_y_label('Amplitude', "")
@@ -161,72 +170,6 @@ class secam2yuv(gr.top_block, Qt.QWidget):
 
         self._qtgui_time_sink_x_0_0_win = sip.wrapinstance(self.qtgui_time_sink_x_0_0.qwidget(), Qt.QWidget)
         self.top_layout.addWidget(self._qtgui_time_sink_x_0_0_win)
-        self.qtgui_number_sink_1 = qtgui.number_sink(
-            gr.sizeof_float,
-            0,
-            qtgui.NUM_GRAPH_HORIZ,
-            1,
-            None # parent
-        )
-        self.qtgui_number_sink_1.set_update_time(0.10)
-        self.qtgui_number_sink_1.set_title("Red Channel")
-
-        labels = ['', '', '', '', '',
-            '', '', '', '', '']
-        units = ['', '', '', '', '',
-            '', '', '', '', '']
-        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
-            ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
-        factor = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-
-        for i in range(1):
-            self.qtgui_number_sink_1.set_min(i, -1)
-            self.qtgui_number_sink_1.set_max(i, 1)
-            self.qtgui_number_sink_1.set_color(i, colors[i][0], colors[i][1])
-            if len(labels[i]) == 0:
-                self.qtgui_number_sink_1.set_label(i, "Data {0}".format(i))
-            else:
-                self.qtgui_number_sink_1.set_label(i, labels[i])
-            self.qtgui_number_sink_1.set_unit(i, units[i])
-            self.qtgui_number_sink_1.set_factor(i, factor[i])
-
-        self.qtgui_number_sink_1.enable_autoscale(False)
-        self._qtgui_number_sink_1_win = sip.wrapinstance(self.qtgui_number_sink_1.qwidget(), Qt.QWidget)
-        self.top_layout.addWidget(self._qtgui_number_sink_1_win)
-        self.qtgui_number_sink_0 = qtgui.number_sink(
-            gr.sizeof_float,
-            0,
-            qtgui.NUM_GRAPH_HORIZ,
-            1,
-            None # parent
-        )
-        self.qtgui_number_sink_0.set_update_time(0.10)
-        self.qtgui_number_sink_0.set_title("Blue Channel")
-
-        labels = ['', '', '', '', '',
-            '', '', '', '', '']
-        units = ['', '', '', '', '',
-            '', '', '', '', '']
-        colors = [("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"),
-            ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black"), ("black", "black")]
-        factor = [1, 1, 1, 1, 1,
-            1, 1, 1, 1, 1]
-
-        for i in range(1):
-            self.qtgui_number_sink_0.set_min(i, -1)
-            self.qtgui_number_sink_0.set_max(i, 1)
-            self.qtgui_number_sink_0.set_color(i, colors[i][0], colors[i][1])
-            if len(labels[i]) == 0:
-                self.qtgui_number_sink_0.set_label(i, "Data {0}".format(i))
-            else:
-                self.qtgui_number_sink_0.set_label(i, labels[i])
-            self.qtgui_number_sink_0.set_unit(i, units[i])
-            self.qtgui_number_sink_0.set_factor(i, factor[i])
-
-        self.qtgui_number_sink_0.enable_autoscale(False)
-        self._qtgui_number_sink_0_win = sip.wrapinstance(self.qtgui_number_sink_0.qwidget(), Qt.QWidget)
-        self.top_layout.addWidget(self._qtgui_number_sink_0_win)
         self.hilbert_fc_0 = filter.hilbert_fc(65, window.WIN_HAMMING, 6.76)
         self.blocks_vector_to_stream_2_1_0 = blocks.vector_to_stream(gr.sizeof_float*1, line_length)
         self.blocks_vector_to_stream_2_1 = blocks.vector_to_stream(gr.sizeof_float*1, line_length)
@@ -281,15 +224,18 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.blocks_stream_demux_1 = blocks.stream_demux(gr.sizeof_float*line_length, (313, 312))
         self.blocks_stream_demux_0_1_2 = blocks.stream_demux(gr.sizeof_float*line_length, (lines_per_frame, lines_per_frame_discard))
         self.blocks_stream_demux_0_1 = blocks.stream_demux(gr.sizeof_float*line_length, (lines_per_frame, lines_per_frame_discard))
+        self.blocks_selector_0_0 = blocks.selector(gr.sizeof_float*line_length,((invert_crcb+invert_crcb_switch)),0)
+        self.blocks_selector_0_0.set_enabled(True)
+        self.blocks_selector_0 = blocks.selector(gr.sizeof_float*line_length,((invert_crcb+invert_crcb_switch)),0)
+        self.blocks_selector_0.set_enabled(True)
         self.blocks_repeat_0_0_2_0 = blocks.repeat(gr.sizeof_float*line_length, 2)
         self.blocks_repeat_0_0_2 = blocks.repeat(gr.sizeof_float*line_length, 2)
         self.blocks_null_sink_4_1 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_null_sink_4_0 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_null_sink_4 = blocks.null_sink(gr.sizeof_float*line_length)
+        self.blocks_null_sink_1 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_null_sink_0_1_2 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_null_sink_0_1 = blocks.null_sink(gr.sizeof_float*line_length)
-        self.blocks_null_sink_0_0 = blocks.null_sink(gr.sizeof_float*line_length)
-        self.blocks_null_sink_0 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_multiply_const_vxx_2_0_0_0 = blocks.multiply_const_ff(.75)
         self.blocks_multiply_const_vxx_2_0_0 = blocks.multiply_const_ff(.75)
         self.blocks_multiply_const_vxx_2_0 = blocks.multiply_const_ff(.25)
@@ -300,15 +246,12 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.blocks_multiply_const_vxx_0_1 = blocks.multiply_const_ff(256)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(256)
         self.blocks_float_to_uchar_0_1 = blocks.float_to_uchar()
-        self.blocks_float_to_uchar_0_0_0_0_1 = blocks.float_to_uchar()
         self.blocks_float_to_uchar_0_0_0 = blocks.float_to_uchar()
         self.blocks_float_to_uchar_0_0 = blocks.float_to_uchar()
         self.blocks_file_source_0_0_0 = blocks.file_source(gr.sizeof_char*1, inputdir + "/" + videofile + "_chroma.tbc", False, ((1135*626)*startfield), 0)
         self.blocks_file_source_0_0_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_file_source_0_0 = blocks.file_source(gr.sizeof_char*1, inputdir + "/" + videofile + ".tbc", False, ((1135*626)*startfield), 0)
         self.blocks_file_source_0_0.set_begin_tag(pmt.PMT_NIL)
-        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, outputdir + "/" + videofile + "_sf" + str(startfield) + ".bin", False)
-        self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_divide_xx_0_0 = blocks.divide_ff(1)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
         self.blocks_delay_0_1 = blocks.delay(gr.sizeof_float*1, colordelay)
@@ -408,10 +351,12 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_deinterleave_0, 1), (self.blocks_multiply_const_vxx_0, 0))
         self.connect((self.blocks_deinterleave_0_1, 0), (self.blocks_add_xx_0_1, 0))
         self.connect((self.blocks_deinterleave_0_1, 1), (self.blocks_multiply_const_vxx_0_1, 0))
-        self.connect((self.blocks_deinterleave_1_0, 0), (self.blocks_null_sink_0_0, 0))
-        self.connect((self.blocks_deinterleave_1_0, 1), (self.blocks_repeat_0_0_2_0, 0))
-        self.connect((self.blocks_deinterleave_1_0_0, 1), (self.blocks_null_sink_0, 0))
-        self.connect((self.blocks_deinterleave_1_0_0, 0), (self.blocks_repeat_0_0_2, 0))
+        self.connect((self.blocks_deinterleave_1_0, 1), (self.blocks_selector_0, 0))
+        self.connect((self.blocks_deinterleave_1_0, 1), (self.blocks_selector_0, 2))
+        self.connect((self.blocks_deinterleave_1_0, 0), (self.blocks_selector_0, 1))
+        self.connect((self.blocks_deinterleave_1_0_0, 1), (self.blocks_selector_0_0, 1))
+        self.connect((self.blocks_deinterleave_1_0_0, 0), (self.blocks_selector_0_0, 0))
+        self.connect((self.blocks_deinterleave_1_0_0, 0), (self.blocks_selector_0_0, 2))
         self.connect((self.blocks_delay_0, 0), (self.blocks_multiply_const_vxx_1_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.blocks_multiply_const_vxx_1, 0))
         self.connect((self.blocks_delay_0_1, 0), (self.blocks_multiply_const_vxx_1_1, 0))
@@ -421,7 +366,6 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_file_source_0_0_0, 0), (self.blocks_uchar_to_float_0_0_1, 0))
         self.connect((self.blocks_float_to_uchar_0_0, 0), (self.video_sdl_sink_0_0_0_0, 1))
         self.connect((self.blocks_float_to_uchar_0_0_0, 0), (self.video_sdl_sink_0_0_0_0, 0))
-        self.connect((self.blocks_float_to_uchar_0_0_0_0_1, 0), (self.blocks_file_sink_0, 0))
         self.connect((self.blocks_float_to_uchar_0_1, 0), (self.video_sdl_sink_0_0_0_0, 2))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_add_xx_0, 1))
         self.connect((self.blocks_multiply_const_vxx_0_1, 0), (self.blocks_add_xx_0_1, 1))
@@ -436,11 +380,11 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_multiply_const_vxx_2, 0), (self.blocks_sub_xx_0, 0))
         self.connect((self.blocks_multiply_const_vxx_2_0, 0), (self.blocks_sub_xx_0_0, 0))
         self.connect((self.blocks_multiply_const_vxx_2_0_0, 0), (self.blocks_stream_to_vector_0_0_1_0_0_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_2_0_0, 0), (self.qtgui_number_sink_0, 0))
         self.connect((self.blocks_multiply_const_vxx_2_0_0_0, 0), (self.blocks_stream_to_vector_0_0_1_0_0_0_0, 0))
-        self.connect((self.blocks_multiply_const_vxx_2_0_0_0, 0), (self.qtgui_number_sink_1, 0))
         self.connect((self.blocks_repeat_0_0_2, 0), (self.blocks_vector_to_stream_0_2_1_0, 0))
         self.connect((self.blocks_repeat_0_0_2_0, 0), (self.blocks_vector_to_stream_0_2_1, 0))
+        self.connect((self.blocks_selector_0, 0), (self.blocks_repeat_0_0_2_0, 0))
+        self.connect((self.blocks_selector_0_0, 0), (self.blocks_repeat_0_0_2, 0))
         self.connect((self.blocks_stream_demux_0_1, 1), (self.blocks_null_sink_0_1, 0))
         self.connect((self.blocks_stream_demux_0_1, 0), (self.blocks_vector_to_stream_0_2, 0))
         self.connect((self.blocks_stream_demux_0_1_2, 1), (self.blocks_null_sink_0_1_2, 0))
@@ -488,7 +432,7 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_sub_xx_2_0, 0), (self.blocks_divide_xx_0, 0))
         self.connect((self.blocks_uchar_to_float_0_0, 0), (self.blocks_deinterleave_0, 0))
         self.connect((self.blocks_uchar_to_float_0_0_1, 0), (self.blocks_deinterleave_0_1, 0))
-        self.connect((self.blocks_vector_to_stream_0, 0), (self.blocks_float_to_uchar_0_0_0_0_1, 0))
+        self.connect((self.blocks_vector_to_stream_0, 0), (self.blocks_null_sink_1, 0))
         self.connect((self.blocks_vector_to_stream_0_2, 0), (self.analog_rail_ff_0, 0))
         self.connect((self.blocks_vector_to_stream_0_2_1, 0), (self.analog_rail_ff_0_0_0, 0))
         self.connect((self.blocks_vector_to_stream_0_2_1_0, 0), (self.analog_rail_ff_0_0_1, 0))
@@ -522,26 +466,25 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.blocks_file_source_0_0.open(self.inputdir + "/" + self.videofile + ".tbc", False)
         self.blocks_file_source_0_0_0.open(self.inputdir + "/" + self.videofile + "_chroma.tbc", False)
 
+    def get_invert_crcb(self):
+        return self.invert_crcb
+
+    def set_invert_crcb(self, invert_crcb):
+        self.invert_crcb = invert_crcb
+        self.blocks_selector_0.set_input_index(((self.invert_crcb+self.invert_crcb_switch)))
+        self.blocks_selector_0_0.set_input_index(((self.invert_crcb+self.invert_crcb_switch)))
+
     def get_outputdir(self):
         return self.outputdir
 
     def set_outputdir(self, outputdir):
         self.outputdir = outputdir
-        self.blocks_file_sink_0.open(self.outputdir + "/" + self.videofile + "_sf" + str(self.startfield) + ".bin")
-
-    def get_startfield(self):
-        return self.startfield
-
-    def set_startfield(self, startfield):
-        self.startfield = startfield
-        self.blocks_file_sink_0.open(self.outputdir + "/" + self.videofile + "_sf" + str(self.startfield) + ".bin")
 
     def get_videofile(self):
         return self.videofile
 
     def set_videofile(self, videofile):
         self.videofile = videofile
-        self.blocks_file_sink_0.open(self.outputdir + "/" + self.videofile + "_sf" + str(self.startfield) + ".bin")
         self.blocks_file_source_0_0.open(self.inputdir + "/" + self.videofile + ".tbc", False)
         self.blocks_file_source_0_0_0.open(self.inputdir + "/" + self.videofile + "_chroma.tbc", False)
 
@@ -565,6 +508,12 @@ class secam2yuv(gr.top_block, Qt.QWidget):
 
     def set_startfield_old(self, startfield_old):
         self.startfield_old = startfield_old
+
+    def get_startfield(self):
+        return self.startfield
+
+    def set_startfield(self, startfield):
+        self.startfield = startfield
 
     def get_samp_rate(self):
         return self.samp_rate
@@ -595,6 +544,14 @@ class secam2yuv(gr.top_block, Qt.QWidget):
     def set_line_length(self, line_length):
         self.line_length = line_length
         self.blocks_delay_0.set_dly(int((self.line_length+1)))
+
+    def get_invert_crcb_switch(self):
+        return self.invert_crcb_switch
+
+    def set_invert_crcb_switch(self, invert_crcb_switch):
+        self.invert_crcb_switch = invert_crcb_switch
+        self.blocks_selector_0.set_input_index(((self.invert_crcb+self.invert_crcb_switch)))
+        self.blocks_selector_0_0.set_input_index(((self.invert_crcb+self.invert_crcb_switch)))
 
     def get_fm_demph(self):
         return self.fm_demph
@@ -630,16 +587,16 @@ def argument_parser():
     description = 'Takes luma and secam chroma TBC files and generates YUV file'
     parser = ArgumentParser(description=description)
     parser.add_argument(
-        "--inputdir", dest="inputdir", type=str, default='/home/user/input/',
+        "--inputdir", dest="inputdir", type=str, default='input directory (with tbcs)',
         help="Set inputdir [default=%(default)r]")
     parser.add_argument(
-        "--outputdir", dest="outputdir", type=str, default='/home/user/output/',
+        "--invert-crcb", dest="invert_crcb", type=intx, default=0,
+        help="Set invert_crcb [default=%(default)r]")
+    parser.add_argument(
+        "--outputdir", dest="outputdir", type=str, default='output directory',
         help="Set outputdir [default=%(default)r]")
     parser.add_argument(
-        "--startfield", dest="startfield", type=intx, default=0,
-        help="Set startfield [default=%(default)r]")
-    parser.add_argument(
-        "--videofile", dest="videofile", type=str, default='tbcfilename',
+        "--videofile", dest="videofile", type=str, default='videofile without .tbc',
         help="Set videofile [default=%(default)r]")
     return parser
 
@@ -653,7 +610,7 @@ def main(top_block_cls=secam2yuv, options=None):
         Qt.QApplication.setGraphicsSystem(style)
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls(inputdir=options.inputdir, outputdir=options.outputdir, startfield=options.startfield, videofile=options.videofile)
+    tb = top_block_cls(inputdir=options.inputdir, invert_crcb=options.invert_crcb, outputdir=options.outputdir, videofile=options.videofile)
 
     tb.start()
 
