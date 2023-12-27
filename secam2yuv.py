@@ -233,7 +233,6 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.blocks_null_sink_4_1 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_null_sink_4_0 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_null_sink_4 = blocks.null_sink(gr.sizeof_float*line_length)
-        self.blocks_null_sink_1 = blocks.null_sink(gr.sizeof_float*1)
         self.blocks_null_sink_0_1_2 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_null_sink_0_1 = blocks.null_sink(gr.sizeof_float*line_length)
         self.blocks_multiply_const_vxx_2_0_0_0 = blocks.multiply_const_ff(.75)
@@ -246,12 +245,15 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.blocks_multiply_const_vxx_0_1 = blocks.multiply_const_ff(256)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(256)
         self.blocks_float_to_uchar_0_1 = blocks.float_to_uchar()
+        self.blocks_float_to_uchar_0_0_0_0_1 = blocks.float_to_uchar()
         self.blocks_float_to_uchar_0_0_0 = blocks.float_to_uchar()
         self.blocks_float_to_uchar_0_0 = blocks.float_to_uchar()
         self.blocks_file_source_0_0_0 = blocks.file_source(gr.sizeof_char*1, inputdir + "/" + videofile + "_chroma.tbc", False, ((1135*626)*startfield), 0)
         self.blocks_file_source_0_0_0.set_begin_tag(pmt.PMT_NIL)
         self.blocks_file_source_0_0 = blocks.file_source(gr.sizeof_char*1, inputdir + "/" + videofile + ".tbc", False, ((1135*626)*startfield), 0)
         self.blocks_file_source_0_0.set_begin_tag(pmt.PMT_NIL)
+        self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_char*1, outputdir + "/" + videofile + "_i" + str(invert_crcb) + ".bin", False)
+        self.blocks_file_sink_0.set_unbuffered(False)
         self.blocks_divide_xx_0_0 = blocks.divide_ff(1)
         self.blocks_divide_xx_0 = blocks.divide_ff(1)
         self.blocks_delay_0_1 = blocks.delay(gr.sizeof_float*1, colordelay)
@@ -351,12 +353,12 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_deinterleave_0, 1), (self.blocks_multiply_const_vxx_0, 0))
         self.connect((self.blocks_deinterleave_0_1, 0), (self.blocks_add_xx_0_1, 0))
         self.connect((self.blocks_deinterleave_0_1, 1), (self.blocks_multiply_const_vxx_0_1, 0))
+        self.connect((self.blocks_deinterleave_1_0, 0), (self.blocks_selector_0, 1))
         self.connect((self.blocks_deinterleave_1_0, 1), (self.blocks_selector_0, 0))
         self.connect((self.blocks_deinterleave_1_0, 1), (self.blocks_selector_0, 2))
-        self.connect((self.blocks_deinterleave_1_0, 0), (self.blocks_selector_0, 1))
-        self.connect((self.blocks_deinterleave_1_0_0, 1), (self.blocks_selector_0_0, 1))
-        self.connect((self.blocks_deinterleave_1_0_0, 0), (self.blocks_selector_0_0, 0))
         self.connect((self.blocks_deinterleave_1_0_0, 0), (self.blocks_selector_0_0, 2))
+        self.connect((self.blocks_deinterleave_1_0_0, 0), (self.blocks_selector_0_0, 0))
+        self.connect((self.blocks_deinterleave_1_0_0, 1), (self.blocks_selector_0_0, 1))
         self.connect((self.blocks_delay_0, 0), (self.blocks_multiply_const_vxx_1_0, 0))
         self.connect((self.blocks_delay_0_0, 0), (self.blocks_multiply_const_vxx_1, 0))
         self.connect((self.blocks_delay_0_1, 0), (self.blocks_multiply_const_vxx_1_1, 0))
@@ -366,6 +368,7 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_file_source_0_0_0, 0), (self.blocks_uchar_to_float_0_0_1, 0))
         self.connect((self.blocks_float_to_uchar_0_0, 0), (self.video_sdl_sink_0_0_0_0, 1))
         self.connect((self.blocks_float_to_uchar_0_0_0, 0), (self.video_sdl_sink_0_0_0_0, 0))
+        self.connect((self.blocks_float_to_uchar_0_0_0_0_1, 0), (self.blocks_file_sink_0, 0))
         self.connect((self.blocks_float_to_uchar_0_1, 0), (self.video_sdl_sink_0_0_0_0, 2))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.blocks_add_xx_0, 1))
         self.connect((self.blocks_multiply_const_vxx_0_1, 0), (self.blocks_add_xx_0_1, 1))
@@ -432,7 +435,7 @@ class secam2yuv(gr.top_block, Qt.QWidget):
         self.connect((self.blocks_sub_xx_2_0, 0), (self.blocks_divide_xx_0, 0))
         self.connect((self.blocks_uchar_to_float_0_0, 0), (self.blocks_deinterleave_0, 0))
         self.connect((self.blocks_uchar_to_float_0_0_1, 0), (self.blocks_deinterleave_0_1, 0))
-        self.connect((self.blocks_vector_to_stream_0, 0), (self.blocks_null_sink_1, 0))
+        self.connect((self.blocks_vector_to_stream_0, 0), (self.blocks_float_to_uchar_0_0_0_0_1, 0))
         self.connect((self.blocks_vector_to_stream_0_2, 0), (self.analog_rail_ff_0, 0))
         self.connect((self.blocks_vector_to_stream_0_2_1, 0), (self.analog_rail_ff_0_0_0, 0))
         self.connect((self.blocks_vector_to_stream_0_2_1_0, 0), (self.analog_rail_ff_0_0_1, 0))
@@ -471,6 +474,7 @@ class secam2yuv(gr.top_block, Qt.QWidget):
 
     def set_invert_crcb(self, invert_crcb):
         self.invert_crcb = invert_crcb
+        self.blocks_file_sink_0.open(self.outputdir + "/" + self.videofile + "_i" + str(self.invert_crcb) + ".bin")
         self.blocks_selector_0.set_input_index(((self.invert_crcb+self.invert_crcb_switch)))
         self.blocks_selector_0_0.set_input_index(((self.invert_crcb+self.invert_crcb_switch)))
 
@@ -479,12 +483,14 @@ class secam2yuv(gr.top_block, Qt.QWidget):
 
     def set_outputdir(self, outputdir):
         self.outputdir = outputdir
+        self.blocks_file_sink_0.open(self.outputdir + "/" + self.videofile + "_i" + str(self.invert_crcb) + ".bin")
 
     def get_videofile(self):
         return self.videofile
 
     def set_videofile(self, videofile):
         self.videofile = videofile
+        self.blocks_file_sink_0.open(self.outputdir + "/" + self.videofile + "_i" + str(self.invert_crcb) + ".bin")
         self.blocks_file_source_0_0.open(self.inputdir + "/" + self.videofile + ".tbc", False)
         self.blocks_file_source_0_0_0.open(self.inputdir + "/" + self.videofile + "_chroma.tbc", False)
 
